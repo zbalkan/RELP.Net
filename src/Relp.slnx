@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Relp/Relp.csproj" />
+  <Project Path="Relp.Tests/Relp.Tests.csproj" />
+</Solution>
