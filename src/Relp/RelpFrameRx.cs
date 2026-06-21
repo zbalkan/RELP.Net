@@ -7,6 +7,7 @@ public sealed class RelpFrameRx
 {
     private readonly byte[] _buffer;
 
+    /// <summary>Provides a RELP API operation.</summary>
     public RelpFrameRx(int transactionId, RelpCommand command, int length, byte[] buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
@@ -31,11 +32,16 @@ public sealed class RelpFrameRx
         _buffer = buffer.ToArray();
     }
 
+    /// <summary>Gets a RELP API value.</summary>
     public int TransactionId { get; }
+    /// <summary>Gets a RELP API value.</summary>
     public RelpCommand Command { get; }
+    /// <summary>Gets a RELP API value.</summary>
     public int Length { get; }
+    /// <summary>Provides a RELP API operation.</summary>
     public byte[] Buffer => _buffer.ToArray();
 
+    /// <summary>Provides a RELP API operation.</summary>
     public int GetResponseCode()
     {
         var text = GetData().Trim();
@@ -47,5 +53,6 @@ public sealed class RelpFrameRx
         return code;
     }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public string GetData() => Encoding.UTF8.GetString(_buffer);
 }

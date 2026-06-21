@@ -7,15 +7,23 @@ public sealed class RelpParser
 {
     private readonly List<byte> _buffer = [];
 
+    /// <summary>Gets a RELP API value.</summary>
     public bool IsComplete { get; private set; }
+    /// <summary>Gets a RELP API value.</summary>
     public int TransactionId { get; private set; }
+    /// <summary>Gets a RELP API value.</summary>
     public RelpCommand Command { get; private set; }
+    /// <summary>Gets a RELP API value.</summary>
     public int Length { get; private set; }
+    /// <summary>Provides a RELP API operation.</summary>
     public byte[] Data { get; private set; } = Array.Empty<byte>();
+    /// <summary>Provides a RELP API operation.</summary>
     public byte[] RemainingBytes { get; private set; } = Array.Empty<byte>();
 
+    /// <summary>Provides a RELP API operation.</summary>
     public void Parse(byte value) => Parse([value]);
 
+    /// <summary>Provides a RELP API operation.</summary>
     public void Parse(ReadOnlySpan<byte> bytes)
     {
         if (IsComplete)
@@ -31,6 +39,7 @@ public sealed class RelpParser
         TryParseBufferedFrame();
     }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public RelpFrameRx ToFrame()
     {
         if (!IsComplete)

@@ -14,6 +14,7 @@ public sealed class RelpConnection : IAsyncDisposable
     private Stream? _stream;
     private bool _disposed;
 
+    /// <summary>Provides a RELP API operation.</summary>
     public RelpConnection(string host, int port, bool useTls = false, X509CertificateCollection? clientCertificates = null)
     {
         if (string.IsNullOrWhiteSpace(host))
@@ -32,11 +33,16 @@ public sealed class RelpConnection : IAsyncDisposable
         ClientCertificates = clientCertificates;
     }
 
+    /// <summary>Gets a RELP API value.</summary>
     public string Host { get; }
+    /// <summary>Gets a RELP API value.</summary>
     public int Port { get; }
+    /// <summary>Gets a RELP API value.</summary>
     public bool UseTls { get; }
+    /// <summary>Gets a RELP API value.</summary>
     public X509CertificateCollection? ClientCertificates { get; }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         await _connectLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -79,6 +85,7 @@ public sealed class RelpConnection : IAsyncDisposable
         }
     }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public async Task SendAsync(byte[] message, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message);
@@ -96,6 +103,7 @@ public sealed class RelpConnection : IAsyncDisposable
         }
     }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public async Task<byte[]> ReceiveAsync(CancellationToken cancellationToken = default)
     {
         await _receiveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -114,6 +122,7 @@ public sealed class RelpConnection : IAsyncDisposable
         }
     }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public async ValueTask DisposeAsync()
     {
         await _connectLock.WaitAsync().ConfigureAwait(false);

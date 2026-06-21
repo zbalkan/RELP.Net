@@ -12,11 +12,15 @@ public sealed class RelpSession
     private readonly SemaphoreSlim _transactionLock = new(1, 1);
     private byte[] _receiveRemainder = Array.Empty<byte>();
 
+    /// <summary>Provides a RELP API operation.</summary>
     public RelpSession(RelpConnection connection) => _connection = connection;
 
+    /// <summary>Gets a RELP API value.</summary>
     public bool IsActive { get; private set; }
+    /// <summary>Gets a RELP API value.</summary>
     public int PendingAcknowledgements => _window.Size;
 
+    /// <summary>Provides a RELP API operation.</summary>
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         await _transactionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -41,6 +45,7 @@ public sealed class RelpSession
         }
     }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public async Task CloseAsync(CancellationToken cancellationToken = default)
     {
         await _transactionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -57,6 +62,7 @@ public sealed class RelpSession
         }
     }
 
+    /// <summary>Provides a RELP API operation.</summary>
     public async Task SendMessageAsync(byte[] message, CancellationToken cancellationToken = default)
     {
         await _transactionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
