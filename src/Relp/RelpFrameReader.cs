@@ -15,7 +15,24 @@ public static class RelpFrameReader
     {
         while (true)
         {
-            var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            ReadResult result;
+            try
+            {
+                result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (IOException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new IOException("Unable to read from the RELP connection.", ex);
+            }
+
             var buffer = result.Buffer;
             var frameBuffer = buffer;
 

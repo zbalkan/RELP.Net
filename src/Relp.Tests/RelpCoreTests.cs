@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.IO.Pipelines;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -146,6 +147,19 @@ public sealed class RelpCoreTests
 
         Assert.IsFalse(RelpFrameReader.TryReadFrame(ref buffer, RelpParserOptions.Default, out _));
         Assert.AreEqual("2 rsp 6 200", Encoding.UTF8.GetString(buffer.ToArray()));
+    }
+
+
+    [TestMethod]
+    public async Task FrameReaderWrapsTransportReadFailuresAsIOException()
+    {
+        var reader = PipeReader.Create(new ThrowingReadStream(new InvalidOperationException("network failed")));
+
+        var ex = await Assert.ThrowsExactlyAsync<IOException>(() => RelpFrameReader.ReadFrameAsync(reader, RelpParserOptions.Default).AsTask());
+
+        Assert.AreEqual("Unable to read from the RELP connection.", ex.Message);
+        Assert.IsInstanceOfType<InvalidOperationException>(ex.InnerException);
+        await reader.CompleteAsync();
     }
 
     [TestMethod]
@@ -801,4 +815,34 @@ public sealed class RelpCoreTests
         await stream.WriteAsync(response.ToByteArray(transactionId), cancellationToken);
         await stream.FlushAsync(cancellationToken);
     }
+}
+internal sealed class ThrowingReadStream(Exception exception) : Stream
+{
+    public override bool CanRead => true;
+
+    public override bool CanSeek => false;
+
+    public override bool CanWrite => false;
+
+    public override long Length => throw new NotSupportedException();
+
+    public override long Position
+    {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+    }
+
+    public override void Flush()
+    {
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) => throw exception;
+
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) => ValueTask.FromException<int>(exception);
+
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 }
