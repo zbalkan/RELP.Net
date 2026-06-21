@@ -65,6 +65,34 @@ safe after the pipe advances; this is appropriate for small acknowledgements,
 while future server-side ingestion can add a callback parser for zero-copy
 processing of large syslog payloads.
 
+## Microsoft.Extensions.Logging sink
+
+The core package can also be registered as a `Microsoft.Extensions.Logging`
+provider. Configure the RELP endpoint when building your DI-backed logging
+pipeline:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Relp;
+
+var services = new ServiceCollection();
+services.AddLogging(builder => {
+    builder.AddRelp(options => {
+        options.Host = "127.0.0.1";
+        options.Port = 1601;
+        options.MinimumLevel = LogLevel.Information;
+        options.IncludeScopes = true;
+    });
+});
+```
+
+`RelpLoggerProvider` queues log events on a bounded background channel, opens a
+RELP session on first use, sends each accepted log record as a `syslog` frame,
+and closes the session when the provider is disposed. Override
+`RelpLoggerOptions.Formatter` when your receiver expects a specific syslog or
+structured payload format.
+
 ## Examples
 
 The examples demonstrate zstd-compressed newline-delimited JSON (NDJSON/JSON
