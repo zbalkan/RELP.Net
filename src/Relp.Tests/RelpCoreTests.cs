@@ -472,13 +472,16 @@ public sealed class RelpCoreTests
                     case RelpCommand.Open:
                         await SendResponseAsync(stream, frame.TransactionId, openResponse, cancellationToken);
                         break;
+
                     case RelpCommand.Syslog:
                         receivedPayloads.Enqueue(Encoding.UTF8.GetString(frame.Buffer));
                         await SendResponseAsync(stream, frame.TransactionId, "200 OK", cancellationToken);
                         break;
+
                     case RelpCommand.Close:
                         await SendResponseAsync(stream, frame.TransactionId, "200 OK", cancellationToken);
                         return;
+
                     default:
                         await SendResponseAsync(stream, frame.TransactionId, "500 unsupported command", cancellationToken);
                         break;

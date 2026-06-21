@@ -34,10 +34,13 @@ public sealed class RelpFrameRx
 
     /// <summary>Gets a RELP API value.</summary>
     public int TransactionId { get; }
+
     /// <summary>Gets a RELP API value.</summary>
     public RelpCommand Command { get; }
+
     /// <summary>Gets a RELP API value.</summary>
     public int Length { get; }
+
     /// <summary>Provides a RELP API operation.</summary>
     public byte[] Buffer => _buffer.ToArray();
 

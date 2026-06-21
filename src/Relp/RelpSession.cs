@@ -17,6 +17,7 @@ public sealed class RelpSession
 
     /// <summary>Gets a RELP API value.</summary>
     public bool IsActive { get; private set; }
+
     /// <summary>Gets a RELP API value.</summary>
     public int PendingAcknowledgements => _window.Size;
 

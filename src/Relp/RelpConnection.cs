@@ -35,10 +35,13 @@ public sealed class RelpConnection : IAsyncDisposable
 
     /// <summary>Gets a RELP API value.</summary>
     public string Host { get; }
+
     /// <summary>Gets a RELP API value.</summary>
     public int Port { get; }
+
     /// <summary>Gets a RELP API value.</summary>
     public bool UseTls { get; }
+
     /// <summary>Gets a RELP API value.</summary>
     public X509CertificateCollection? ClientCertificates { get; }
 

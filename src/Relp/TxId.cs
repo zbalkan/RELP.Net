@@ -5,8 +5,10 @@ public sealed class TxId : IComparable, IComparable<TxId>, IEquatable<TxId>, IFo
 {
     /// <summary>Defines a RELP API constant.</summary>
     public const int MaxValue = 999_999_999;
+
     /// <summary>Defines a RELP API constant.</summary>
     public const int MinValue = 1;
+
     private int _transactionIdentifier;
 
     /// <summary>Provides a RELP API operation.</summary>
@@ -26,6 +28,7 @@ public sealed class TxId : IComparable, IComparable<TxId>, IEquatable<TxId>, IFo
 
     /// <summary>Provides a RELP API operation.</summary>
     public uint UnsignedValue => (uint)Value;
+
     /// <summary>Provides a RELP API operation.</summary>
     public int Value => Volatile.Read(ref _transactionIdentifier);
 

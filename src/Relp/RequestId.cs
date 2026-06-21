@@ -8,10 +8,4 @@ public sealed class RequestId
     /// <summary>Gets the next request identifier.</summary>
     /// <returns>The next zero-based request identifier.</returns>
     public int Next() => Interlocked.Increment(ref _requestIdentifier) - 1;
-
-    /// <summary>Gets the next request identifier.</summary>
-    /// <returns>The next zero-based request identifier.</returns>
-    [Obsolete("Use Next instead.")]
-    /// <summary>Provides a RELP API operation.</summary>
-    public int GetNextId() => Next();
 }

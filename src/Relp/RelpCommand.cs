@@ -5,14 +5,19 @@ public enum RelpCommand
 {
     /// <summary>Opens a RELP session.</summary>
     Open,
+
     /// <summary>Closes a RELP session.</summary>
     Close,
+
     /// <summary>Aborts a RELP session.</summary>
     Abort,
+
     /// <summary>Indicates that the server is closing the RELP session.</summary>
     ServerClose,
+
     /// <summary>Transports a syslog message.</summary>
     Syslog,
+
     /// <summary>Contains a RELP response.</summary>
     Response
 }

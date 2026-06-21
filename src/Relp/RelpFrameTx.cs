@@ -16,6 +16,7 @@ public sealed class RelpFrameTx
 
     /// <summary>Gets a RELP API value.</summary>
     public RelpCommand Command { get; }
+
     /// <summary>Provides a RELP API operation.</summary>
     public byte[] Message => _message.ToArray();
 
