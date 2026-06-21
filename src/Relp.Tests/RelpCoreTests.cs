@@ -539,7 +539,8 @@ public sealed class RelpCoreTests
     {
         var batch = new RelpBatch();
         var success = new RelpFrameRx(1, RelpCommand.Response, 6, Encoding.UTF8.GetBytes("200 OK"));
-        var failure = new RelpFrameRx(2, RelpCommand.Response, 12, Encoding.UTF8.GetBytes("500 failure"));
+        var failurePayload = Encoding.UTF8.GetBytes("500 failure");
+        var failure = new RelpFrameRx(2, RelpCommand.Response, failurePayload.Length, failurePayload);
 
         var first = batch.Insert(Encoding.UTF8.GetBytes("first"));
         var second = batch.PutRequest(RelpFrameTx.FromMessage(Encoding.UTF8.GetBytes("second")));
