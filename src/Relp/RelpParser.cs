@@ -5,15 +5,15 @@ namespace Relp;
 /// <summary>Incremental parser for octet-counted RELP frames.</summary>
 public sealed class RelpParser
 {
-    /// <summary>The default maximum RELP header length, in bytes.</summary>
-    public const int DefaultMaxHeaderLength = RelpParserOptions.DefaultMaxHeaderLength;
-
     /// <summary>The default maximum complete RELP frame length, in bytes.</summary>
     public const int DefaultMaxFrameLength = RelpParserOptions.DefaultMaxFrameLength;
 
+    /// <summary>The default maximum RELP header length, in bytes.</summary>
+    public const int DefaultMaxHeaderLength = RelpParserOptions.DefaultMaxHeaderLength;
+
+    private readonly RelpParserOptions _options;
     private byte[] _buffer = Array.Empty<byte>();
     private int _count;
-    private readonly RelpParserOptions _options;
 
     /// <summary>Initializes a parser with bounded header and frame sizes.</summary>
     public RelpParser(int maxFrameLength = DefaultMaxFrameLength, int maxHeaderLength = DefaultMaxHeaderLength)
@@ -27,29 +27,29 @@ public sealed class RelpParser
         _options = options;
     }
 
+    /// <summary>Gets the parsed RELP command.</summary>
+    public RelpCommand Command { get; private set; }
+
+    /// <summary>Gets a copy of the parsed payload bytes.</summary>
+    public byte[] Data { get; private set; } = Array.Empty<byte>();
+
+    /// <summary>Gets a value indicating whether a complete RELP frame has been parsed.</summary>
+    public bool IsComplete { get; private set; }
+
+    /// <summary>Gets the parsed payload length, in bytes.</summary>
+    public int Length { get; private set; }
+
     /// <summary>Gets the maximum accepted complete RELP frame length, in bytes.</summary>
     public int MaxFrameLength => _options.MaxFrameLength;
 
     /// <summary>Gets the maximum accepted RELP header length, in bytes.</summary>
     public int MaxHeaderLength => _options.MaxHeaderLength;
 
-    /// <summary>Gets a value indicating whether a complete RELP frame has been parsed.</summary>
-    public bool IsComplete { get; private set; }
+    /// <summary>Gets bytes received after the completed frame.</summary>
+    public byte[] RemainingBytes { get; private set; } = Array.Empty<byte>();
 
     /// <summary>Gets the parsed transaction identifier.</summary>
     public int TransactionId { get; private set; }
-
-    /// <summary>Gets the parsed RELP command.</summary>
-    public RelpCommand Command { get; private set; }
-
-    /// <summary>Gets the parsed payload length, in bytes.</summary>
-    public int Length { get; private set; }
-
-    /// <summary>Gets a copy of the parsed payload bytes.</summary>
-    public byte[] Data { get; private set; } = Array.Empty<byte>();
-
-    /// <summary>Gets bytes received after the completed frame.</summary>
-    public byte[] RemainingBytes { get; private set; } = Array.Empty<byte>();
 
     /// <summary>Appends one byte to the parser and attempts to complete a RELP frame.</summary>
     public void Parse(byte value)

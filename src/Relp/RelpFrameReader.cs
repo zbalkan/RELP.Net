@@ -7,6 +7,34 @@ namespace Relp;
 /// <summary>Reads RELP frames from buffered byte sequences.</summary>
 public static class RelpFrameReader
 {
+    /// <summary>Reads one RELP frame from a pipe, advancing consumed bytes after a complete frame.</summary>
+    public static async ValueTask<RelpFrameRx> ReadFrameAsync(
+        PipeReader reader,
+        RelpParserOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        while (true)
+        {
+            var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            var buffer = result.Buffer;
+            var frameBuffer = buffer;
+
+            if (TryReadFrame(ref frameBuffer, options, out var frame))
+            {
+                reader.AdvanceTo(frameBuffer.Start, frameBuffer.End);
+                return frame;
+            }
+
+            if (result.IsCompleted)
+            {
+                reader.AdvanceTo(buffer.Start, buffer.End);
+                throw new IOException("Connection closed before a complete RELP frame was received.");
+            }
+
+            reader.AdvanceTo(buffer.Start, buffer.End);
+        }
+    }
+
     /// <summary>Attempts to read one complete RELP frame from the buffer.</summary>
     public static bool TryReadFrame(ref ReadOnlySequence<byte> buffer, RelpParserOptions options, out RelpFrameRx frame)
     {
@@ -95,51 +123,24 @@ public static class RelpFrameReader
         return true;
     }
 
-    /// <summary>Reads one RELP frame from a pipe, advancing consumed bytes after a complete frame.</summary>
-    public static async ValueTask<RelpFrameRx> ReadFrameAsync(
-        PipeReader reader,
-        RelpParserOptions options,
-        CancellationToken cancellationToken = default)
+    private static void ThrowIfHeaderTooLong(long bufferedLength, int maxHeaderLength)
     {
-        while (true)
+        if (bufferedLength > maxHeaderLength)
         {
-            var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-            var buffer = result.Buffer;
-            var frameBuffer = buffer;
-
-            if (TryReadFrame(ref frameBuffer, options, out var frame))
-            {
-                reader.AdvanceTo(frameBuffer.Start, frameBuffer.End);
-                return frame;
-            }
-
-            if (result.IsCompleted)
-            {
-                reader.AdvanceTo(buffer.Start, buffer.End);
-                throw new IOException("Connection closed before a complete RELP frame was received.");
-            }
-
-            reader.AdvanceTo(buffer.Start, buffer.End);
+            throw new FormatException($"RELP header exceeds the configured maximum header length of {maxHeaderLength} bytes.");
         }
     }
 
-    private static bool TryReadToken(
-        ref SequenceReader<byte> reader,
-        byte delimiter,
-        int maxHeaderLength,
-        out ReadOnlySequence<byte> token,
-        out bool foundDelimiter)
+    private static bool TryParseInt32(ReadOnlySequence<byte> token, out int value)
     {
-        if (reader.TryReadTo(out token, delimiter, advancePastDelimiter: true))
+        if (token.IsSingleSegment)
         {
-            foundDelimiter = true;
-            return true;
+            var span = token.FirstSpan;
+            return Utf8Parser.TryParse(span, out value, out var consumed) && consumed == span.Length;
         }
 
-        foundDelimiter = false;
-        token = default;
-        ThrowIfHeaderTooLong(reader.Consumed, maxHeaderLength);
-        return false;
+        var buffer = token.ToArray();
+        return Utf8Parser.TryParse(buffer, out value, out var copiedConsumed) && copiedConsumed == buffer.Length;
     }
 
     private static bool TryReadLengthToken(
@@ -170,23 +171,22 @@ public static class RelpFrameReader
         return false;
     }
 
-    private static bool TryParseInt32(ReadOnlySequence<byte> token, out int value)
+    private static bool TryReadToken(
+                    ref SequenceReader<byte> reader,
+        byte delimiter,
+        int maxHeaderLength,
+        out ReadOnlySequence<byte> token,
+        out bool foundDelimiter)
     {
-        if (token.IsSingleSegment)
+        if (reader.TryReadTo(out token, delimiter, advancePastDelimiter: true))
         {
-            var span = token.FirstSpan;
-            return Utf8Parser.TryParse(span, out value, out var consumed) && consumed == span.Length;
+            foundDelimiter = true;
+            return true;
         }
 
-        var buffer = token.ToArray();
-        return Utf8Parser.TryParse(buffer, out value, out var copiedConsumed) && copiedConsumed == buffer.Length;
-    }
-
-    private static void ThrowIfHeaderTooLong(long bufferedLength, int maxHeaderLength)
-    {
-        if (bufferedLength > maxHeaderLength)
-        {
-            throw new FormatException($"RELP header exceeds the configured maximum header length of {maxHeaderLength} bytes.");
-        }
+        foundDelimiter = false;
+        token = default;
+        ThrowIfHeaderTooLong(reader.Consumed, maxHeaderLength);
+        return false;
     }
 }

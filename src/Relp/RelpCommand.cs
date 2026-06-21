@@ -38,24 +38,6 @@ public static class RelpCommandExtensions
         _ => throw new ArgumentOutOfRangeException(nameof(command), command, null)
     };
 
-    /// <summary>Attempts to parse a RELP wire protocol command name.</summary>
-    /// <param name="value">The protocol command name to parse.</param>
-    /// <param name="command">When this method returns, contains the parsed command if parsing succeeded.</param>
-    /// <returns><see langword="true" /> if <paramref name="value" /> was parsed; otherwise, <see langword="false" />.</returns>
-    public static bool TryParseProtocolString(string value, out RelpCommand command)
-    {
-        command = value switch {
-            "open" => RelpCommand.Open,
-            "close" => RelpCommand.Close,
-            "abort" => RelpCommand.Abort,
-            "serverclose" => RelpCommand.ServerClose,
-            "syslog" => RelpCommand.Syslog,
-            "rsp" => RelpCommand.Response,
-            _ => default
-        };
-        return value is "open" or "close" or "abort" or "serverclose" or "syslog" or "rsp";
-    }
-
     /// <summary>Attempts to parse a RELP wire protocol command name from UTF-8 bytes.</summary>
     /// <param name="value">The protocol command name to parse.</param>
     /// <param name="command">When this method returns, contains the parsed command if parsing succeeded.</param>
@@ -78,5 +60,23 @@ public static class RelpCommandExtensions
             [(byte)'s', (byte)'e', (byte)'r', (byte)'v', (byte)'e', (byte)'r', (byte)'c', (byte)'l', (byte)'o', (byte)'s', (byte)'e'] or
             [(byte)'s', (byte)'y', (byte)'s', (byte)'l', (byte)'o', (byte)'g'] or
             [(byte)'r', (byte)'s', (byte)'p'];
+    }
+
+    /// <summary>Attempts to parse a RELP wire protocol command name.</summary>
+    /// <param name="value">The protocol command name to parse.</param>
+    /// <param name="command">When this method returns, contains the parsed command if parsing succeeded.</param>
+    /// <returns><see langword="true" /> if <paramref name="value" /> was parsed; otherwise, <see langword="false" />.</returns>
+    public static bool TryParseProtocolString(string value, out RelpCommand command)
+    {
+        command = value switch {
+            "open" => RelpCommand.Open,
+            "close" => RelpCommand.Close,
+            "abort" => RelpCommand.Abort,
+            "serverclose" => RelpCommand.ServerClose,
+            "syslog" => RelpCommand.Syslog,
+            "rsp" => RelpCommand.Response,
+            _ => default
+        };
+        return value is "open" or "close" or "abort" or "serverclose" or "syslog" or "rsp";
     }
 }

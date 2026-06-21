@@ -7,29 +7,29 @@ namespace Relp;
 /// <summary>Configures the RELP sink for Microsoft.Extensions.Logging.</summary>
 public sealed class RelpLoggerOptions
 {
-    /// <summary>Gets or sets the RELP server host.</summary>
-    public string Host { get; set; } = "127.0.0.1";
-
-    /// <summary>Gets or sets the RELP server port.</summary>
-    public int Port { get; set; } = 1601;
-
-    /// <summary>Gets or sets whether the RELP connection should use TLS.</summary>
-    public bool UseTls { get; set; }
-
     /// <summary>Gets or sets client certificates used when <see cref="UseTls" /> is true.</summary>
     public X509CertificateCollection? ClientCertificates { get; set; }
 
-    /// <summary>Gets or sets the minimum level written to RELP.</summary>
-    public LogLevel MinimumLevel { get; set; } = LogLevel.Information;
+    /// <summary>Gets or sets a custom formatter that turns log entries into RELP syslog payload bytes.</summary>
+    public Func<RelpLogEntry, byte[]> Formatter { get; set; } = DefaultFormatter;
 
-    /// <summary>Gets or sets the bounded in-memory queue capacity.</summary>
-    public int QueueCapacity { get; set; } = 1024;
+    /// <summary>Gets or sets the RELP server host.</summary>
+    public string Host { get; set; } = "127.0.0.1";
 
     /// <summary>Gets or sets whether active logging scopes are included in emitted messages.</summary>
     public bool IncludeScopes { get; set; }
 
-    /// <summary>Gets or sets a custom formatter that turns log entries into RELP syslog payload bytes.</summary>
-    public Func<RelpLogEntry, byte[]> Formatter { get; set; } = DefaultFormatter;
+    /// <summary>Gets or sets the minimum level written to RELP.</summary>
+    public LogLevel MinimumLevel { get; set; } = LogLevel.Information;
+
+    /// <summary>Gets or sets the RELP server port.</summary>
+    public int Port { get; set; } = 1601;
+
+    /// <summary>Gets or sets the bounded in-memory queue capacity.</summary>
+    public int QueueCapacity { get; set; } = 1024;
+
+    /// <summary>Gets or sets whether the RELP connection should use TLS.</summary>
+    public bool UseTls { get; set; }
 
     internal void Validate()
     {
@@ -66,7 +66,7 @@ public sealed class RelpLoggerOptions
 
         if (entry.Scopes.Count > 0)
         {
-            builder.Append(" scopes=").Append(string.Join(" => ", entry.Scopes));
+            builder.Append(" scopes=").AppendJoin(" => ", entry.Scopes);
         }
 
         if (entry.Exception is not null)

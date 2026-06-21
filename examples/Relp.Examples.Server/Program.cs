@@ -96,13 +96,16 @@ namespace Relp.Examples.Server
                         case RelpCommand.Open:
                             await SendAckAsync(stream, frame.TransactionId, "200 OK\nrelp_version=0\ncommands=syslog", cancellationToken);
                             break;
+
                         case RelpCommand.Syslog:
                             PrintCompressedJsonLines(decompressor, frame.Buffer);
                             await SendAckAsync(stream, frame.TransactionId, "200 OK", cancellationToken);
                             break;
+
                         case RelpCommand.Close:
                             await SendAckAsync(stream, frame.TransactionId, "200 OK", cancellationToken);
                             return;
+
                         default:
                             await SendAckAsync(stream, frame.TransactionId, "500 unsupported command", cancellationToken);
                             break;

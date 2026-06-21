@@ -10,13 +10,13 @@ namespace Relp;
 public sealed class RelpConnection : IAsyncDisposable
 {
     private readonly SemaphoreSlim _connectLock = new(1, 1);
-    private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly SemaphoreSlim _receiveLock = new(1, 1);
+    private readonly SemaphoreSlim _sendLock = new(1, 1);
     private TcpClient? _client;
-    private Stream? _stream;
-    private PipeReader? _reader;
-    private PipeWriter? _writer;
     private bool _disposed;
+    private PipeReader? _reader;
+    private Stream? _stream;
+    private PipeWriter? _writer;
 
     /// <summary>Provides a RELP API operation.</summary>
     public RelpConnection(string host, int port, bool useTls = false, X509CertificateCollection? clientCertificates = null)
@@ -38,6 +38,9 @@ public sealed class RelpConnection : IAsyncDisposable
     }
 
     /// <summary>Gets a RELP API value.</summary>
+    public X509CertificateCollection? ClientCertificates { get; }
+
+    /// <summary>Gets a RELP API value.</summary>
     public string Host { get; }
 
     /// <summary>Gets a RELP API value.</summary>
@@ -45,9 +48,6 @@ public sealed class RelpConnection : IAsyncDisposable
 
     /// <summary>Gets a RELP API value.</summary>
     public bool UseTls { get; }
-
-    /// <summary>Gets a RELP API value.</summary>
-    public X509CertificateCollection? ClientCertificates { get; }
 
     /// <summary>Provides a RELP API operation.</summary>
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
@@ -91,85 +91,6 @@ public sealed class RelpConnection : IAsyncDisposable
         finally
         {
             _connectLock.Release();
-        }
-    }
-
-    /// <summary>Provides a RELP API operation.</summary>
-    public async Task SendAsync(byte[] message, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(message);
-        await SendAsync(message.AsMemory(), cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>Provides a RELP API operation.</summary>
-    public async Task SendAsync(ReadOnlyMemory<byte> message, CancellationToken cancellationToken = default)
-    {
-        await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-            var writer = _writer ?? throw new InvalidOperationException("Connection is not open.");
-            await writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-            await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _sendLock.Release();
-        }
-    }
-
-    /// <summary>Writes one RELP frame to the connection.</summary>
-    public async ValueTask WriteFrameAsync(RelpFrameTx frame, int transactionId, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(frame);
-        await SendAsync(frame.ToByteArray(transactionId), cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>Reads one complete RELP frame from the connection.</summary>
-    public async ValueTask<RelpFrameRx> ReadFrameAsync(
-        RelpParserOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        await _receiveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-            var reader = _reader ?? throw new InvalidOperationException("Connection is not open.");
-            return await RelpFrameReader.ReadFrameAsync(reader, options, cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _receiveLock.Release();
-        }
-    }
-
-    /// <summary>Provides a RELP API operation.</summary>
-    public async Task<byte[]> ReceiveAsync(CancellationToken cancellationToken = default)
-    {
-        await _receiveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-            var stream = _stream ?? throw new InvalidOperationException("Connection is not open.");
-            var buffer = ArrayPool<byte>.Shared.Rent(4096);
-            try
-            {
-                var count = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
-                if (count == 0)
-                {
-                    throw new IOException("Connection closed by the server.");
-                }
-
-                return buffer.AsSpan(0, count).ToArray();
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buffer);
-            }
-        }
-        finally
-        {
-            _receiveLock.Release();
         }
     }
 
@@ -222,5 +143,84 @@ public sealed class RelpConnection : IAsyncDisposable
         }
 
         client?.Dispose();
+    }
+
+    /// <summary>Reads one complete RELP frame from the connection.</summary>
+    public async ValueTask<RelpFrameRx> ReadFrameAsync(
+        RelpParserOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        await _receiveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var reader = _reader ?? throw new InvalidOperationException("Connection is not open.");
+            return await RelpFrameReader.ReadFrameAsync(reader, options, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _receiveLock.Release();
+        }
+    }
+
+    /// <summary>Provides a RELP API operation.</summary>
+    public async Task<byte[]> ReceiveAsync(CancellationToken cancellationToken = default)
+    {
+        await _receiveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var stream = _stream ?? throw new InvalidOperationException("Connection is not open.");
+            var buffer = ArrayPool<byte>.Shared.Rent(4096);
+            try
+            {
+                var count = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
+                if (count == 0)
+                {
+                    throw new IOException("Connection closed by the server.");
+                }
+
+                return buffer.AsSpan(0, count).ToArray();
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+        finally
+        {
+            _receiveLock.Release();
+        }
+    }
+
+    /// <summary>Provides a RELP API operation.</summary>
+    public async Task SendAsync(byte[] message, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        await SendAsync(message.AsMemory(), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Provides a RELP API operation.</summary>
+    public async Task SendAsync(ReadOnlyMemory<byte> message, CancellationToken cancellationToken = default)
+    {
+        await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var writer = _writer ?? throw new InvalidOperationException("Connection is not open.");
+            await writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+            await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _sendLock.Release();
+        }
+    }
+
+    /// <summary>Writes one RELP frame to the connection.</summary>
+    public async ValueTask WriteFrameAsync(RelpFrameTx frame, int transactionId, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+        await SendAsync(frame.ToByteArray(transactionId), cancellationToken).ConfigureAwait(false);
     }
 }

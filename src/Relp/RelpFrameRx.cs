@@ -32,8 +32,8 @@ public sealed class RelpFrameRx
         _buffer = buffer.ToArray();
     }
 
-    /// <summary>Gets a RELP API value.</summary>
-    public int TransactionId { get; }
+    /// <summary>Provides a RELP API operation.</summary>
+    public byte[] Buffer => _buffer.ToArray();
 
     /// <summary>Gets a RELP API value.</summary>
     public RelpCommand Command { get; }
@@ -41,8 +41,11 @@ public sealed class RelpFrameRx
     /// <summary>Gets a RELP API value.</summary>
     public int Length { get; }
 
+    /// <summary>Gets a RELP API value.</summary>
+    public int TransactionId { get; }
+
     /// <summary>Provides a RELP API operation.</summary>
-    public byte[] Buffer => _buffer.ToArray();
+    public string GetData() => Encoding.UTF8.GetString(_buffer);
 
     /// <summary>Provides a RELP API operation.</summary>
     public int GetResponseCode()
@@ -66,8 +69,7 @@ public sealed class RelpFrameRx
         return code;
     }
 
-    /// <summary>Provides a RELP API operation.</summary>
-    public string GetData() => Encoding.UTF8.GetString(_buffer);
+    private static bool IsAsciiDigit(byte value) => value is >= (byte)'0' and <= (byte)'9';
 
     private static ReadOnlySpan<byte> TrimAsciiSpaces(byte[] value)
     {
@@ -86,6 +88,4 @@ public sealed class RelpFrameRx
 
         return span.Slice(start, end - start + 1);
     }
-
-    private static bool IsAsciiDigit(byte value) => value is >= (byte)'0' and <= (byte)'9';
 }

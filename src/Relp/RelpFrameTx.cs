@@ -22,13 +22,13 @@ public sealed class RelpFrameTx
     public byte[] Message => _message.ToArray();
 
     /// <summary>Provides a RELP API operation.</summary>
-    public static RelpFrameTx FromMessage(byte[] message) => new(RelpCommand.Syslog, message);
-
-    /// <summary>Provides a RELP API operation.</summary>
     public static RelpFrameTx FromCommand(RelpCommand command) => new(command);
 
     /// <summary>Provides a RELP API operation.</summary>
     public static RelpFrameTx FromCommandAndMessage(RelpCommand command, byte[] message) => new(command, message);
+
+    /// <summary>Provides a RELP API operation.</summary>
+    public static RelpFrameTx FromMessage(byte[] message) => new(RelpCommand.Syslog, message);
 
     /// <summary>Provides a RELP API operation.</summary>
     public byte[] ToByteArray(int transactionId = TxId.MinValue)

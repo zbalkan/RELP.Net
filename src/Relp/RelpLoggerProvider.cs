@@ -9,8 +9,8 @@ public sealed class RelpLoggerProvider : ILoggerProvider, ISupportExternalScope
     private readonly Channel<RelpLogEntry> _channel;
     private readonly CancellationTokenSource _stopping = new();
     private readonly Task _worker;
-    private IExternalScopeProvider _scopeProvider = new LoggerExternalScopeProvider();
     private bool _disposed;
+    private IExternalScopeProvider _scopeProvider = new LoggerExternalScopeProvider();
 
     /// <summary>Initializes a new RELP logging provider.</summary>
     public RelpLoggerProvider(RelpLoggerOptions options)
@@ -34,9 +34,6 @@ public sealed class RelpLoggerProvider : ILoggerProvider, ISupportExternalScope
     public ILogger CreateLogger(string categoryName) => new RelpLogger(categoryName, this);
 
     /// <inheritdoc />
-    public void SetScopeProvider(IExternalScopeProvider scopeProvider) => _scopeProvider = scopeProvider;
-
-    /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed)
@@ -47,6 +44,7 @@ public sealed class RelpLoggerProvider : ILoggerProvider, ISupportExternalScope
         _disposed = true;
         _channel.Writer.TryComplete();
         _stopping.CancelAfter(TimeSpan.FromSeconds(5));
+#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception
         try
         {
             _worker.GetAwaiter().GetResult();
@@ -59,9 +57,11 @@ public sealed class RelpLoggerProvider : ILoggerProvider, ISupportExternalScope
         {
             _stopping.Dispose();
         }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception
     }
 
-    internal bool IsEnabled(LogLevel logLevel) => !_disposed && logLevel != LogLevel.None && logLevel >= Options.MinimumLevel;
+    /// <inheritdoc />
+    public void SetScopeProvider(IExternalScopeProvider scopeProvider) => _scopeProvider = scopeProvider;
 
     internal void Enqueue(RelpLogEntry entry)
     {
@@ -70,6 +70,8 @@ public sealed class RelpLoggerProvider : ILoggerProvider, ISupportExternalScope
             _channel.Writer.TryWrite(entry);
         }
     }
+
+    internal bool IsEnabled(LogLevel logLevel) => !_disposed && logLevel != LogLevel.None && logLevel >= Options.MinimumLevel;
 
     private async Task ProcessQueueAsync()
     {
@@ -82,7 +84,7 @@ public sealed class RelpLoggerProvider : ILoggerProvider, ISupportExternalScope
             {
                 try
                 {
-                    if (session is null || !session.IsActive)
+                    if (session?.IsActive != true)
                     {
                         connection = new RelpConnection(Options.Host, Options.Port, Options.UseTls, Options.ClientCertificates);
                         session = new RelpSession(connection);
